@@ -130,7 +130,7 @@ let surveyTrackLayer = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     const themeBtn = document.getElementById("themeToggle");
-    const savedTheme = localStorage.getItem("sonar_theme") || "light";
+    const savedTheme = localStorage.getItem("sonar_theme") || "dark";
     document.body.classList.toggle("dark-mode", savedTheme === "dark");
     if (themeBtn) themeBtn.textContent = savedTheme === "dark" ? "☀" : "☾";
     themeBtn?.addEventListener("click", () => {
@@ -140,16 +140,39 @@ document.addEventListener("DOMContentLoaded", () => {
         themeBtn.textContent = dark ? "☀" : "☾";
     });
 
+    // Intro Screen Action Handlers
     const enter = document.getElementById("enterWorkspace");
     enter?.addEventListener("click", () => {
-        document.getElementById("introScreen")?.remove();
-        const shell = document.getElementById("appShell");
-        if (shell) { shell.hidden = false; }
+        openWorkspace("dashboard");
+    });
+
+    const demoScanBtn = document.getElementById("introDemoScanBtn");
+    demoScanBtn?.addEventListener("click", () => {
+        openWorkspace("scan");
+        // Automatically load and analyze Sample 1 (Ghost Net)
+        setTimeout(() => {
+            const sample1 = DEMO_SAMPLES[1];
+            if (sample1) {
+                processSonarFile(sample1.name, sample1);
+            }
+        }, 300);
+    });
+
+    const introMapBtn = document.getElementById("introMapBtn");
+    introMapBtn?.addEventListener("click", () => {
+        openWorkspace("map");
+    });
+
+    document.querySelectorAll("[data-launch-tab]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const targetTab = btn.getAttribute("data-launch-tab") || "dashboard";
+            openWorkspace(targetTab);
+        });
     });
 
     const brandHome = document.getElementById("brandHome");
     brandHome?.addEventListener("click", () => {
-        window.location.reload();
+        openIntroPortal();
     });
 
     initNavigation();
@@ -161,46 +184,84 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSessionAnalytics();
     bindActions();
     bindScanEvents();
+    initIntroRadar();
 
     if (!window.L) {
         showMapFallback("liveMap");
     }
 });
 
+function openWorkspace(targetTab = "dashboard") {
+    const intro = document.getElementById("introScreen");
+    if (intro) {
+        intro.style.transition = "opacity 0.25s ease, transform 0.25s ease";
+        intro.style.opacity = "0";
+        intro.style.transform = "scale(0.98)";
+        setTimeout(() => {
+            intro.hidden = true;
+            intro.style.display = "none";
+        }, 250);
+    }
+    const shell = document.getElementById("appShell");
+    if (shell) {
+        shell.hidden = false;
+    }
+    switchTab(targetTab);
+}
+
+function openIntroPortal() {
+    const shell = document.getElementById("appShell");
+    if (shell) {
+        shell.hidden = true;
+    }
+    const intro = document.getElementById("introScreen");
+    if (intro) {
+        intro.hidden = false;
+        intro.style.display = "flex";
+        requestAnimationFrame(() => {
+            intro.style.opacity = "1";
+            intro.style.transform = "scale(1)";
+        });
+    }
+}
+
+function switchTab(tab) {
+    document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
+    document.getElementById(tab)?.classList.add("active");
+    document.querySelectorAll(".nav-item,.top-tab").forEach(x => x.classList.toggle("active", x.dataset.tab === tab));
+    
+    const titles = {
+        dashboard: "Mission Overview",
+        map: "Live Detection Map",
+        scan: "Sonar Analysis",
+        detections: "Detection Database",
+        reports: "Mission Reports",
+        analytics: "Analytics & Intelligence",
+        sessions: "Survey Sessions",
+        downloads: "Download Centre",
+        settings: "System Settings",
+        about: "About Sonar Vision"
+    };
+    const pageTitle = document.getElementById("pageTitle");
+    if (pageTitle) pageTitle.textContent = titles[tab] || "Mission Overview";
+
+    if (tab === "map" && window.L) {
+        requestAnimationFrame(() => {
+            const map = initMap("liveMap", 15.4050, 73.7250, 13);
+            map?.invalidateSize(true);
+            refreshMapLayers(map);
+            setTimeout(() => map?.invalidateSize(true), 150);
+            setTimeout(() => map?.invalidateSize(true), 500);
+        });
+    }
+    setTimeout(() => Object.values(maps).forEach(m => m.invalidateSize(true)), 120);
+    setTimeout(() => Object.values(maps).forEach(m => m.invalidateSize(true)), 500);
+}
+
 function initNavigation() {
     document.querySelectorAll("[data-tab]").forEach(btn => {
         btn.addEventListener("click", () => {
-            const tab = btn.dataset.tab;
-            document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
-            document.getElementById(tab)?.classList.add("active");
-            document.querySelectorAll(".nav-item,.top-tab").forEach(x => x.classList.toggle("active", x.dataset.tab === tab));
-            
-            const titles = {
-                dashboard: "Mission Overview",
-                map: "Live Detection Map",
-                scan: "Sonar Analysis",
-                detections: "Detection Database",
-                reports: "Mission Reports",
-                analytics: "Analytics & Intelligence",
-                sessions: "Survey Sessions",
-                downloads: "Download Centre",
-                settings: "System Settings",
-                about: "About Sonar Vision"
-            };
-            const pageTitle = document.getElementById("pageTitle");
-            if (pageTitle) pageTitle.textContent = titles[tab] || "Mission Overview";
-
-            if (tab === "map" && window.L) {
-                requestAnimationFrame(() => {
-                    const map = initMap("liveMap", 15.4050, 73.7250, 13);
-                    map?.invalidateSize(true);
-                    refreshMapLayers(map);
-                    setTimeout(() => map?.invalidateSize(true), 150);
-                    setTimeout(() => map?.invalidateSize(true), 500);
-                });
-            }
-            setTimeout(() => Object.values(maps).forEach(m => m.invalidateSize(true)), 120);
-            setTimeout(() => Object.values(maps).forEach(m => m.invalidateSize(true)), 500);
+            switchTab(btn.dataset.tab);
         });
     });
 }
@@ -210,10 +271,224 @@ window.addEventListener("resize", () => {
 });
 
 function updateClock() {
+    const timeStr = new Date().toLocaleTimeString("en-IN", { hour12: false });
     const clock = document.getElementById("clock");
     if (clock) {
-        clock.textContent = new Date().toLocaleTimeString("en-IN", { hour12: false });
+        clock.textContent = timeStr;
     }
+    const introClock = document.getElementById("introClock");
+    if (introClock) {
+        introClock.textContent = timeStr;
+    }
+}
+
+/* ==========================================================================
+   Interactive Tactical Sonar Radar Scope Engine
+   ========================================================================== */
+let radarSpeed = 1.0;
+let sonarAudioEnabled = false;
+let audioCtx = null;
+let lastPingAngle = -1;
+
+function initIntroRadar() {
+    const canvas = document.getElementById("introRadarCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Handle high DPI
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const size = rect.width || 480;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    ctx.scale(dpr, dpr);
+
+    let angle = 0;
+    const centerX = size / 2;
+    const centerY = size / 2;
+    const radius = size * 0.44;
+
+    // Radar Frequency Mode Buttons
+    document.querySelectorAll("[data-radar-freq]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("[data-radar-freq]").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            radarSpeed = btn.dataset.radarFreq === "900" ? 1.5 : 1.0;
+            showToast(`Radar Mode: ${btn.dataset.radarFreq} kHz Swath Profile`);
+        });
+    });
+
+    // Audio Ping Toggle
+    const audioToggle = document.getElementById("introSonarAudioToggle");
+    audioToggle?.addEventListener("click", () => {
+        sonarAudioEnabled = !sonarAudioEnabled;
+        audioToggle.classList.toggle("muted", !sonarAudioEnabled);
+        audioToggle.textContent = sonarAudioEnabled ? "🔊 PING ON" : "🔇 PING OFF";
+        if (sonarAudioEnabled && !audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (sonarAudioEnabled) {
+            playSonarPing();
+        }
+    });
+
+    // Filter Buttons
+    document.querySelectorAll("[data-radar-filter]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll("[data-radar-filter]").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            const filter = btn.dataset.radarFilter;
+            applyRadarFilter(filter);
+        });
+    });
+
+    // Target badge clicks
+    document.querySelectorAll(".radar-target-badge").forEach(badge => {
+        badge.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const targetId = badge.dataset.targetId;
+            const targetSample = DEMO_SAMPLES[targetId === "4" ? 3 : targetId === "3" ? 2 : targetId];
+            if (targetSample) {
+                openWorkspace("scan");
+                setTimeout(() => processSonarFile(targetSample.name, targetSample), 200);
+            }
+        });
+    });
+
+    function playSonarPing() {
+        if (!sonarAudioEnabled) return;
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.45);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        } catch (e) {
+            console.warn("Audio ping error:", e);
+        }
+    }
+
+    function applyRadarFilter(filter) {
+        const t1 = document.querySelector(".radar-target-badge.t1");
+        const t2 = document.querySelector(".radar-target-badge.t2");
+        const t3 = document.querySelector(".radar-target-badge.t3");
+        const t4 = document.querySelector(".radar-target-badge.t4");
+        const count = document.getElementById("hudTargetCount");
+
+        if (filter === "all") {
+            [t1, t2, t3, t4].forEach(el => el && (el.style.display = "block"));
+            if (count) count.textContent = "4 CONTACTS";
+        } else if (filter === "hazard") {
+            [t1, t2, t4].forEach(el => el && (el.style.display = "block"));
+            if (t3) t3.style.display = "none";
+            if (count) count.textContent = "3 HAZARDS";
+        } else if (filter === "nets") {
+            if (t1) t1.style.display = "block";
+            [t2, t3, t4].forEach(el => el && (el.style.display = "none"));
+            if (count) count.textContent = "1 GHOST GEAR";
+        } else if (filter === "drums") {
+            [t2, t4].forEach(el => el && (el.style.display = "block"));
+            [t1, t3].forEach(el => el && (el.style.display = "none"));
+            if (count) count.textContent = "2 METALS";
+        }
+    }
+
+    function renderRadar() {
+        ctx.clearRect(0, 0, size, size);
+
+        // 1. Outer Dark Grid Background
+        ctx.fillStyle = "rgba(4, 16, 22, 0.95)";
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Concentric Range Rings (50m, 100m, 150m, 200m)
+        const rings = [0.25, 0.5, 0.75, 1.0];
+        rings.forEach((scale, i) => {
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * scale, 0, Math.PI * 2);
+            ctx.strokeStyle = i === 3 ? "rgba(0, 229, 208, 0.45)" : "rgba(0, 229, 208, 0.14)";
+            ctx.lineWidth = i === 3 ? 1.5 : 1;
+            ctx.stroke();
+        });
+
+        // 3. Radial Spoke Lines (every 30 degrees)
+        for (let a = 0; a < 360; a += 30) {
+            const rad = (a * Math.PI) / 180;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + Math.cos(rad) * radius, centerY + Math.sin(rad) * radius);
+            ctx.strokeStyle = a % 90 === 0 ? "rgba(0, 229, 208, 0.25)" : "rgba(0, 229, 208, 0.08)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // 4. Rotating Sonar Beam Sweep Trail (Arc with gradient decay)
+        const currentRad = (angle * Math.PI) / 180;
+        const trailArc = Math.PI * 0.35; // 63 degrees trail
+
+        const beamGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+        beamGradient.addColorStop(0, "rgba(0, 240, 255, 0.4)");
+        beamGradient.addColorStop(0.7, "rgba(0, 229, 208, 0.2)");
+        beamGradient.addColorStop(1, "rgba(0, 180, 160, 0.02)");
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, currentRad - trailArc, currentRad, false);
+        ctx.closePath();
+        ctx.fillStyle = beamGradient;
+        ctx.fill();
+        ctx.restore();
+
+        // 5. Leading Sonar Beam Line
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(centerX + Math.cos(currentRad) * radius, centerY + Math.sin(currentRad) * radius);
+        ctx.strokeStyle = "#00f0ff";
+        ctx.shadowColor = "#00f0ff";
+        ctx.shadowBlur = 10;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // 6. Sonar Center Origin Pulse
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = "#00f0ff";
+        ctx.fill();
+
+        // 7. Update Telemetry Bearing in HUD
+        const bearingAngle = Math.round(angle);
+        const sweepBearingEl = document.getElementById("hudSweepAngle");
+        if (sweepBearingEl && Math.abs(bearingAngle - lastPingAngle) >= 1) {
+            sweepBearingEl.textContent = `${String(bearingAngle).padStart(3, '0')}°`;
+        }
+
+        // Check if sweeping past key targets to trigger ping audio
+        const targetBearings = [65, 140, 225, 310];
+        targetBearings.forEach(tb => {
+            if (Math.abs(bearingAngle - tb) < 2 && lastPingAngle !== tb) {
+                lastPingAngle = tb;
+                if (sonarAudioEnabled) playSonarPing();
+            }
+        });
+
+        angle = (angle + 1.2 * radarSpeed) % 360;
+        requestAnimationFrame(renderRadar);
+    }
+
+    renderRadar();
 }
 
 function showMapFallback(id) {

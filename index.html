@@ -9,28 +9,228 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="dark-mode">
     <section class="intro-screen" id="introScreen">
         <div class="intro-grid"></div>
-        <div class="intro-top"><span>SONAR VISION / 01</span><span>MARINE SURVEY SYSTEM</span><span>FIELD EDITION</span>
-        </div>
-        <div class="intro-content">
-            <div class="intro-mark"><span class="sonar-ring r1"></span><span class="sonar-ring r2"></span><span
-                    class="sonar-line"></span><b>SONAR<br>VISION</b></div>
-            <p class="intro-kicker">SONAR VISION · MARINE INTELLIGENCE</p>
-            <h1>Read the water.<br><em>Find what lies beneath.</em></h1>
-            <p class="intro-copy">A field workstation for recording, locating and reviewing underwater detections from
-                sonar
-                survey passes.</p>
-            <div class="intro-details">
-                <div><span>ACTIVE VESSEL</span><b>FRONTEND-2</b></div>
-                <div><span>LAST SESSION</span><b>0028</b></div>
-                <div><span>AREA LOGGED</span><b>12.45 km²</b></div>
+        <div class="intro-particles" id="introParticles"></div>
+        
+        <header class="intro-top">
+            <div class="intro-top-left">
+                <span class="intro-badge pulse-cyan">SONAR VISION / 01</span>
+                <span class="intro-divider">/</span>
+                <span class="intro-edition">MARINE INTELLIGENCE WORKSTATION</span>
             </div>
-            <button class="enter-btn" id="enterWorkspace">ENTER SURVEY WORKSPACE <span>↗</span></button>
+            <div class="intro-top-center">
+                <span class="sensor-live-pill"><i class="radar-dot"></i> DUAL-CHIRP 455/900 kHz ONLINE</span>
+            </div>
+            <div class="intro-top-right">
+                <span class="intro-session-tag">SESSION: <b>0028</b></span>
+                <span class="intro-divider">/</span>
+                <span id="introClock" class="intro-clock">--:--:--</span>
+            </div>
+        </header>
+
+        <div class="intro-main-stage">
+            <!-- Left Column: Command & Briefing Hub -->
+            <div class="intro-content">
+                <div class="intro-brand-row">
+                    <div class="intro-mark">
+                        <span class="sonar-ring r1"></span>
+                        <span class="sonar-ring r2"></span>
+                        <span class="sonar-line"></span>
+                        <b>SV</b>
+                    </div>
+                    <div class="intro-brand-meta">
+                        <span class="intro-kicker">AUTONOMOUS ACOUSTIC INTELLIGENCE</span>
+                        <h2 class="intro-system-name">SONAR VISION FIELD WORKSTATION</h2>
+                    </div>
+                </div>
+
+                <h1 class="intro-hero-title">Read the water.<br><em>Find what lies beneath.</em></h1>
+                <p class="intro-copy">
+                    A next-generation field workstation for high-resolution side-scan and multibeam sonar surveys. Detect, classify, and geolocate submerged ghost gear, hazardous drums, and marine debris in real time with acoustic edge intelligence.
+                </p>
+
+
+                <!-- Primary Action Hub -->
+                <div class="intro-actions-row">
+                    <button class="enter-btn primary-pulse" id="enterWorkspace">
+                        <span>ENTER SURVEY WORKSPACE</span>
+                        <span class="arrow-glyph">↗</span>
+                    </button>
+                    <button class="demo-launch-btn" id="introDemoScanBtn" title="Launch instant demo scan analysis">
+                        <span class="lightning-icon">⚡</span>
+                        <span>RUN DEMO SCAN</span>
+                    </button>
+                    <button class="map-launch-btn" id="introMapBtn" title="Jump to geospatial map">
+                        <span>MAP VIEW ⌖</span>
+                    </button>
+                </div>
+
+                <!-- Quick Navigation Feature Matrix -->
+                <div class="intro-feature-matrix">
+                    <div class="feature-card" data-launch-tab="scan">
+                        <div class="feature-icon">⌁</div>
+                        <div class="feature-text">
+                            <strong>Acoustic Scan Studio</strong>
+                            <span>Analyze side-scan & multibeam sonar imagery</span>
+                        </div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                    <div class="feature-card" data-launch-tab="map">
+                        <div class="feature-icon">⌖</div>
+                        <div class="feature-text">
+                            <strong>Geospatial Map</strong>
+                            <span>Offshore vessel track lines & target coordinates</span>
+                        </div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                    <div class="feature-card" data-launch-tab="dashboard">
+                        <div class="feature-icon">◈</div>
+                        <div class="feature-text">
+                            <strong>Threat Analytics</strong>
+                            <span>Sector threat indices & debris density matrix</span>
+                        </div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                    <div class="feature-card" data-launch-tab="detections">
+                        <div class="feature-icon">≡</div>
+                        <div class="feature-text">
+                            <strong>Detection Database</strong>
+                            <span>Target ledger, CSV / JSON intelligence export</span>
+                        </div>
+                        <span class="card-arrow">→</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Interactive Sonar Radar Tactical Scope -->
+            <div class="intro-radar-scope-wrapper">
+                <div class="radar-hud-card">
+                    <div class="radar-hud-header">
+                        <div class="hud-header-title">
+                            <span class="hud-dot"></span>
+                            <b>TACTICAL SONAR RADAR SCOPE</b>
+                        </div>
+                        <div class="hud-controls">
+                            <button class="hud-mode-btn active" data-radar-freq="455">455 kHz</button>
+                            <button class="hud-mode-btn" data-radar-freq="900">900 kHz</button>
+                            <button class="hud-audio-btn" id="introSonarAudioToggle" title="Toggle Sonar Audio Ping">🔊 PING</button>
+                        </div>
+                    </div>
+
+                    <div class="radar-viewport-container">
+                        <canvas id="introRadarCanvas" width="480" height="480"></canvas>
+                        
+                        <!-- HUD Compass & Coordinates Overlay -->
+                        <div class="radar-hud-compass north">N · 000°</div>
+                        <div class="radar-hud-compass east">E · 090°</div>
+                        <div class="radar-hud-compass south">S · 180°</div>
+                        <div class="radar-hud-compass west">W · 270°</div>
+                        
+                        <!-- Range Markers -->
+                        <div class="radar-range-tag r-50">50m</div>
+                        <div class="radar-range-tag r-100">100m</div>
+                        <div class="radar-range-tag r-200">200m</div>
+
+                        <!-- Target Callout Badges Over Radar -->
+                        <div class="radar-target-badge t1" data-target-id="1">
+                            <span class="target-ping"></span>
+                            <div class="target-info-card">
+                                <b>T-01: GHOST NETTING</b>
+                                <span>CONF: 94% · DEPTH: 3.4m</span>
+                                <span class="badge-hazard-high">HIGH HAZARD</span>
+                            </div>
+                        </div>
+
+                        <div class="radar-target-badge t2" data-target-id="2">
+                            <span class="target-ping red-ping"></span>
+                            <div class="target-info-card">
+                                <b>T-02: CHEMICAL DRUM</b>
+                                <span>CONF: 96% · DEPTH: 8.2m</span>
+                                <span class="badge-hazard-high">CRITICAL</span>
+                            </div>
+                        </div>
+
+                        <div class="radar-target-badge t3" data-target-id="3">
+                            <span class="target-ping cyan-ping"></span>
+                            <div class="target-info-card">
+                                <b>T-03: PLASTIC ARRAY</b>
+                                <span>CONF: 89% · DEPTH: 7.9m</span>
+                                <span class="badge-hazard-med">MEDIUM</span>
+                            </div>
+                        </div>
+
+                        <div class="radar-target-badge t4" data-target-id="4">
+                            <span class="target-ping red-ping"></span>
+                            <div class="target-info-card">
+                                <b>T-04: RUPTURED PIPE</b>
+                                <span>CONF: 92% · DEPTH: 12.1m</span>
+                                <span class="badge-hazard-high">HIGH HAZARD</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Radar Scope Telemetry & Target Inspector -->
+                    <div class="radar-hud-footer">
+                        <div class="hud-target-summary" id="radarTargetDetail">
+                            <div class="target-stat-item">
+                                <span>ACTIVE ANOMALIES</span>
+                                <strong id="hudTargetCount">4 CONTACTS</strong>
+                            </div>
+                            <div class="target-stat-item">
+                                <span>SWEEP BEARING</span>
+                                <strong id="hudSweepAngle">284°</strong>
+                            </div>
+                            <div class="target-stat-item">
+                                <span>SWATH WIDTH</span>
+                                <strong>120 M</strong>
+                            </div>
+                            <div class="target-stat-item">
+                                <span>SNR RATIO</span>
+                                <strong>28.4 dB</strong>
+                            </div>
+                        </div>
+
+                        <div class="radar-filter-bar">
+                            <span>TARGET FILTER:</span>
+                            <button class="filter-pill active" data-radar-filter="all">ALL</button>
+                            <button class="filter-pill" data-radar-filter="hazard">HAZARDS</button>
+                            <button class="filter-pill" data-radar-filter="nets">GHOST GEAR</button>
+                            <button class="filter-pill" data-radar-filter="drums">METALS</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="intro-footer"><span>SONAR VISION v1.0</span><span>DATA STAYS LOCAL TO THIS
-                WORKSTATION</span><span>READY</span></div>
+
+        <!-- Dynamic Hydrographic Ticker Footer -->
+        <footer class="intro-footer">
+            <div class="ticker-label">HYDROGRAPHIC TELEMETRY:</div>
+            <div class="ticker-scroll-wrap">
+                <div class="ticker-content" id="telemetryTicker">
+                    <span>VESSEL: <b>FRONTEND-2</b></span>
+                    <span class="ticker-sep">/</span>
+                    <span>COORDINATES: <b>15°26'28.3"N 73°42'34.2"E</b></span>
+                    <span class="ticker-sep">/</span>
+                    <span>SOUND VELOCITY: <b>1,514.2 m/s</b></span>
+                    <span class="ticker-sep">/</span>
+                    <span>WATER TEMP: <b>24.6°C</b></span>
+                    <span class="ticker-sep">/</span>
+                    <span>SALINITY: <b>35.2 PSU</b></span>
+                    <span class="ticker-sep">/</span>
+                    <span>SWEEP FREQUENCY: <b>455 kHz CHIRP</b></span>
+                    <span class="ticker-sep">/</span>
+                    <span>PING CADENCE: <b>1.50 s</b></span>
+                    <span class="ticker-sep">/</span>
+                    <span>STATUS: <b>ZERO DROPPED PINGS · NOMINAL</b></span>
+                </div>
+            </div>
+            <div class="intro-footer-status">
+                <span class="status-online-dot"></span>
+                <span>SYSTEM READY</span>
+            </div>
+        </footer>
     </section>
 
     <div class="app-shell" id="appShell" hidden>
@@ -49,7 +249,7 @@
                 <button class="nav-item sessions-nav" data-tab="sessions">Sessions</button>
             </nav>
             <div class="header-tools"><span class="system-state"><i></i>ONLINE</span><span
-                    id="clock">--:--:--</span><button class="theme-toggle" id="themeToggle">☾</button><button
+                    id="clock">--:--:--</span><button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode">☀</button><button
                     class="header-about" data-tab="about">About</button>
             </div>
         </header>
