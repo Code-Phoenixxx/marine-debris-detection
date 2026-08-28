@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonar Vision — Marine Survey Record</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <section class="intro-screen" id="introScreen">
+        <div class="intro-grid"></div>
+        <div class="intro-top"><span>SONAR VISION / 01</span><span>MARINE SURVEY SYSTEM</span><span>FIELD EDITION</span>
+        </div>
+        <div class="intro-content">
+            <div class="intro-mark"><span class="sonar-ring r1"></span><span class="sonar-ring r2"></span><span
+                    class="sonar-line"></span><b>SONAR<br>VISION</b></div>
+            <p class="intro-kicker">SONAR VISION · MARINE INTELLIGENCE</p>
+            <h1>Read the water.<br><em>Find what lies beneath.</em></h1>
+            <p class="intro-copy">A field workstation for recording, locating and reviewing underwater detections from
+                sonar
+                survey passes.</p>
+            <div class="intro-details">
+                <div><span>ACTIVE VESSEL</span><b>FRONTEND-2</b></div>
+                <div><span>LAST SESSION</span><b>0028</b></div>
+                <div><span>AREA LOGGED</span><b>12.45 km²</b></div>
+            </div>
+            <button class="enter-btn" id="enterWorkspace">ENTER SURVEY WORKSPACE <span>↗</span></button>
+        </div>
+        <div class="intro-footer"><span>SONAR VISION v1.0</span><span>DATA STAYS LOCAL TO THIS
+                WORKSTATION</span><span>READY</span></div>
+    </section>
+
+    <div class="app-shell" id="appShell" hidden>
+        <header class="work-header">
+            <button class="brand-lockup" id="brandHome" type="button" aria-label="Return to Sonar Vision open page">
+                <div class="brand-stamp">SV</div>
+                <div><b>SONAR VISION</b><span>FIELD SURVEY / FRONTEND-2</span></div>
+            </button>
+            <nav class="work-nav">
+                <button class="nav-item active" data-tab="dashboard">Overview</button>
+                <button class="nav-item" data-tab="scan">Scan</button>
+                <button class="nav-item" data-tab="map">Map</button>
+                <button class="nav-item" data-tab="detections">Detections</button>
+                <button class="nav-item" data-tab="reports">Reports</button>
+                <button class="nav-item" data-tab="analytics">Analytics</button>
+                <button class="nav-item sessions-nav" data-tab="sessions">Sessions</button>
+            </nav>
+            <div class="header-tools"><span class="system-state"><i></i>ONLINE</span><span
+                    id="clock">--:--:--</span><button class="theme-toggle" id="themeToggle">☾</button><button
+                    class="header-about" data-tab="about">About</button>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="content">
+                <section class="tab-page active" id="dashboard">
+                    <div class="survey-heading">
+                        <div>
+                            <span class="cyan-label">MISSION 0028 · AUTONOMOUS MARINE INTELLIGENCE</span>
+                            <h2>Mission Overview & Threat Intelligence</h2>
+                            <p>Real-time coastal survey telemetry, high-priority acoustic anomalies, classified debris distribution, and environmental clearance metrics.</p>
+                        </div>
+                        <div class="heading-actions">
+                            <button class="secondary-btn" id="demoBtn">SYNC DEMO DATA</button>
+                            <button class="secondary-btn" data-tab="map">VIEW GEOSPATIAL MAP ↗</button>
+                            <button class="primary-btn" data-tab="scan">+ RUN SONAR SCAN ↗</button>
+                        </div>
+                    </div>
+
+                    <!-- Top 4 KPI Metrics Row -->
+                    <div class="kpi-metric-strip">
+                        <div class="kpi-card">
+                            <div class="kpi-top">
+                                <span>TOTAL OBJECTS IDENTIFIED</span>
+                                <span class="kpi-badge pulse-green" id="kpiPassTrend">+0 THIS PASS</span>
+                            </div>
+                            <div class="kpi-val"><b id="mTotal">0</b><small>targets logged</small></div>
+                            <div class="kpi-split">
+                                <span><i class="dot high"></i> <b id="mHighSplit">0</b> High</span>
+                                <span><i class="dot medium"></i> <b id="mMedSplit">0</b> Med</span>
+                                <span><i class="dot low"></i> <b id="mLowSplit">0</b> Low</span>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-top">
+                                <span>SURVEY AREA SWEPT</span>
+                                <span class="kpi-badge" id="surveyCoverageBadge">0.0% COVERAGE</span>
+                            </div>
+                            <div class="kpi-val"><b id="surveyAreaVal">0.00</b><small>km² covered</small></div>
+                            <div class="kpi-progress">
+                                <div class="kpi-progress-fill" id="surveyCoverageFill" style="width: 0%"></div>
+                            </div>
+                            <div class="kpi-sub" id="surveyTrackSub">0.00 km Track Line · Offshore Survey Corridor</div>
+                        </div>
+
+                        <div class="kpi-card highlight-hazard">
+                            <div class="kpi-top">
+                                <span>CRITICAL DEBRIS HAZARDS</span>
+                                <span class="kpi-badge hazard-alert" id="hazardStatusBadge">STANDBY</span>
+                            </div>
+                            <div class="kpi-val"><b id="criticalHazardCount">0</b><small>high risk targets</small></div>
+                            <div class="kpi-sub" id="criticalHazardSub">Awaiting sonar scan uploads</div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-top">
+                                <span>AI INFERENCE & SONAR SENSOR</span>
+                                <span class="kpi-badge status-live">ONLINE</span>
+                            </div>
+                            <div class="kpi-val"><b id="kpiLatencyVal">142</b><small>ms avg latency</small></div>
+                            <div class="kpi-sub">Side-Scan 455kHz / Multibeam 900kHz · Ping: 1.5s · SNR: 28.4 dB</div>
+                        </div>
+                    </div>
+
+                    <!-- Main Dashboard Intelligence Floor (2-Column Grid) -->
+                    <div class="dashboard-intel-floor">
+                        <!-- Left Main Panel: Sector Threat Distribution & Debris Composition Matrix -->
+                        <div class="intel-column-main">
+                            <!-- Sector Threat Radar & Density -->
+                            <div class="intel-card">
+                                <div class="intel-card-head">
+                                    <div>
+                                        <span class="panel-kicker">ACOUSTIC DENSITY ANALYSIS</span>
+                                        <h4>Survey Sector Threat Index</h4>
+                                    </div>
+                                    <span class="sector-active-badge" id="activeSectorBadge">4 MARINE SECTORS</span>
+                                </div>
+                                <div class="sector-grid">
+                                    <div class="sector-card" id="sectorCardB3">
+                                        <div class="sector-top">
+                                            <b>SECTOR B-3 (Coastal Zone)</b>
+                                            <span class="threat-tag" id="sectorB3Threat">STANDBY · 0%</span>
+                                        </div>
+                                        <div class="sector-stats">
+                                            <div><span>TARGETS</span><strong id="sectorB3Count">0 items</strong></div>
+                                            <div><span>DOMINANT DEBRIS</span><strong>Ghost Nets & Plastics</strong></div>
+                                            <div><span>DEPTH</span><strong>3.4 m</strong></div>
+                                        </div>
+                                        <div class="sector-bar"><div class="sector-bar-fill" id="sectorB3Bar" style="width: 0%; background: var(--red);"></div></div>
+                                    </div>
+
+                                    <div class="sector-card" id="sectorCardB4">
+                                        <div class="sector-top">
+                                            <b>SECTOR B-4 (Harbor Outfall)</b>
+                                            <span class="threat-tag" id="sectorB4Threat">STANDBY · 0%</span>
+                                        </div>
+                                        <div class="sector-stats">
+                                            <div><span>TARGETS</span><strong id="sectorB4Count">0 items</strong></div>
+                                            <div><span>DOMINANT DEBRIS</span><strong>Metal Drums & Cordage</strong></div>
+                                            <div><span>DEPTH</span><strong>8.2 m</strong></div>
+                                        </div>
+                                        <div class="sector-bar"><div class="sector-bar-fill" id="sectorB4Bar" style="width: 0%; background: var(--yellow);"></div></div>
+                                    </div>
+
+                                    <div class="sector-card" id="sectorCardAlpha">
+                                        <div class="sector-top">
+                                            <b>SECTOR ALPHA (Offshore Trench)</b>
+                                            <span class="threat-tag" id="sectorAlphaThreat">STANDBY · 0%</span>
+                                        </div>
+                                        <div class="sector-stats">
+                                            <div><span>TARGETS</span><strong id="sectorAlphaCount">0 items</strong></div>
+                                            <div><span>DOMINANT DEBRIS</span><strong>Pipeline & Ballast</strong></div>
+                                            <div><span>DEPTH</span><strong>12.5 m</strong></div>
+                                        </div>
+                                        <div class="sector-bar"><div class="sector-bar-fill" id="sectorAlphaBar" style="width: 0%; background: var(--teal);"></div></div>
+                                    </div>
+
+                                    <div class="sector-card" id="sectorCardC1">
+                                        <div class="sector-top">
+                                            <b>SECTOR C-1 (Shallow Reefs)</b>
+                                            <span class="threat-tag" id="sectorC1Threat">STANDBY · 0%</span>
+                                        </div>
+                                        <div class="sector-stats">
+                                            <div><span>TARGETS</span><strong id="sectorC1Count">0 items</strong></div>
+                                            <div><span>DOMINANT DEBRIS</span><strong>Dispersed Polymers</strong></div>
+                                            <div><span>DEPTH</span><strong>1.8 m</strong></div>
+                                        </div>
+                                        <div class="sector-bar"><div class="sector-bar-fill" id="sectorC1Bar" style="width: 0%; background: var(--green);"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Debris Material Breakdown Matrix -->
+                            <div class="intel-card">
+                                <div class="intel-card-head">
+                                    <div>
+                                        <span class="panel-kicker">MATERIAL CLASSIFICATION</span>
+                                        <h4>Debris Composition Breakdown</h4>
+                                    </div>
+                                    <span class="composition-total" id="compositionTotalBadge">0 CLASSIFIED TARGETS</span>
+                                </div>
+                                <div class="material-bars-wrap" id="materialBarsWrap">
+                                    <div class="material-item">
+                                        <div class="material-meta">
+                                            <span>Ghost Gear & Abandoned Fishing Nets</span>
+                                            <b>0 items (0%)</b>
+                                        </div>
+                                        <div class="material-progress">
+                                            <div class="material-fill" style="width: 0%; background: #e6c05d;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: High-Priority Live Anomaly Stream & Ledger -->
+                        <div class="intel-column-side">
+                            <div class="intel-card">
+                                <div class="intel-card-head">
+                                    <div>
+                                        <span class="panel-kicker">REAL-TIME STREAM</span>
+                                        <h4>Priority Acoustic Detections</h4>
+                                    </div>
+                                    <button class="text-btn" data-tab="detections">VIEW ALL →</button>
+                                </div>
+                                <div class="live-anomaly-feed" id="recentList"></div>
+                            </div>
+
+                            <!-- Autonomous Vessel & Sonar Rig Ledger -->
+                            <div class="intel-card vessel-card">
+                                <div class="intel-card-head">
+                                    <div>
+                                        <span class="panel-kicker">VESSEL & SENSORS</span>
+                                        <h4>Survey Telemetry</h4>
+                                    </div>
+                                    <span class="status-pill">FRONTEND-2</span>
+                                </div>
+                                <div class="vessel-metrics-grid">
+                                    <div><span>SESSION</span><b>0028 (ACTIVE)</b></div>
+                                    <div><span>SONAR PING</span><b>1.50 s</b></div>
+                                    <div><span>CURRENT DEPTH</span><b>03.4 m</b></div>
+                                    <div><span>SPEED OVER WATER</span><b>4.2 kn</b></div>
+                                    <div><span>LATITUDE</span><b>15.4050° N</b></div>
+                                    <div><span>LONGITUDE</span><b>73.7250° E</b></div>
+                                    <div><span>WATER SALINITY</span><b>35.2 PSU</b></div>
+                                    <div><span>WATER TEMP</span><b>24.6 °C</b></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Historical Rate & Acoustic Chart Strip -->
+                    <div class="bottom-strip">
+                        <article class="field-log">
+                            <div class="strip-head">
+                                <span>TEMPORAL DETECTION RATE</span>
+                                <b>SURVEY DURATION (01:12:36)</b>
+                            </div>
+                            <div class="chart-wrap compact-chart">
+                                <div class="y-axis"><span>40</span><span>20</span><span>0</span></div>
+                                <svg viewBox="0 0 800 130" preserveAspectRatio="none" class="line-chart">
+                                    <path class="area" d="M0 100 L55 78 L110 91 L165 63 L220 83 L275 52 L330 72 L385 40 L440 65 L495 45 L550 58 L605 31 L660 50 L715 26 L800 38 L800 130 L0 130Z" />
+                                    <polyline class="line" points="0,100 55,78 110,91 165,63 220,83 275,52 330,72 385,40 440,65 495,45 550,58 605,31 660,50 715,26 800,38" />
+                                </svg>
+                            </div>
+                        </article>
+                        
+                        <article class="field-log">
+                            <div class="strip-head">
+                                <span>CONFIDENCE DISTRIBUTION</span>
+                                <b>RELIABILITY LEDGER</b>
+                            </div>
+                            <div class="confidence-summary-bars">
+                                <div class="conf-bar-row">
+                                    <span>High Confidence (&gt;80%)</span>
+                                    <strong id="mHigh">62</strong>
+                                    <div class="conf-bar-bg"><div class="conf-bar-fill high-bar" style="width: 48.4%"></div></div>
+                                </div>
+                                <div class="conf-bar-row">
+                                    <span>Medium Confidence (50-80%)</span>
+                                    <strong id="mMedium">43</strong>
+                                    <div class="conf-bar-bg"><div class="conf-bar-fill medium-bar" style="width: 33.6%"></div></div>
+                                </div>
+                                <div class="conf-bar-row">
+                                    <span>Low Confidence (&lt;50%)</span>
+                                    <strong id="mLow">23</strong>
+                                    <div class="conf-bar-bg"><div class="conf-bar-fill low-bar" style="width: 18.0%"></div></div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="field-log session-note">
+                            <div class="strip-head">
+                                <span>SYSTEM STATUS</span>
+                                <b>ALL RIGS NOMINAL</b>
+                            </div>
+                            <p>Side-scan & multibeam sonar arrays synchronized. Real-time neural inference active at <strong>142 ms</strong> latency. <strong>156 frames</strong> processed with zero dropped pings.</p>
+                            <button class="text-btn" data-tab="analytics">VIEW DETAILED ANALYTICS →</button>
+                        </article>
+                    </div>
+                </section>
+
+                <!-- MAP -->
+                <section class="tab-page" id="map">
+                    <div class="page-intro">
+                        <div><span class="cyan-label">GEOSPATIAL MONITORING</span>
+                            <h3>Live Detection Map</h3>
+                            <p>Real-time survey track and geotagged detections across offshore marine sectors.</p>
+                        </div>
+                        <div><button class="secondary-btn" id="centerMap">CENTER SURVEY</button></div>
+                    </div>
+                    <div class="full-map-panel">
+                        <div id="liveMap"></div>
+                        <div class="floating-map-info">
+                            <span>LAT <b>15.4050° N</b></span>
+                            <span>LNG <b>73.7250° E</b></span>
+                            <span>DEPTH <b>3.4 m</b></span>
+                            <span>CORRIDOR <b>ARABIAN SEA OFFSHORE</b></span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SONAR SCAN -->
+                <section class="tab-page" id="scan">
+                    <div class="page-intro">
+                        <div><span class="cyan-label">SONAR ANALYSIS</span>
+                            <h3>Scan a Sonar Image</h3>
+                            <p>Upload a sonar scan, review the image, and inspect detected objects before adding the
+                                results to the
+                                survey.</p>
+                        </div>
+                        <span class="scan-mode">LOCAL ANALYSIS</span>
+                    </div>
+                    <div class="scan-workspace">
+                        <section class="scan-upload-panel">
+                            <div class="scan-panel-head">
+                                <div><span class="panel-kicker">01 / INPUT</span>
+                                    <h4>Upload sonar scan</h4>
+                                </div><span class="scan-format">PNG · JPG · JPEG</span>
+                            </div>
+                            <label class="upload-box" id="uploadBox" for="sonarFile">
+                                <input id="sonarFile" type="file" accept="image/png,image/jpeg,image/jpg">
+                                <div class="upload-mark">+</div>
+                                <strong>Drop sonar scan here</strong>
+                                <span>or click to browse from this workstation</span>
+                                <small>Supports side-scan, multibeam & synthetic aperture sonar images</small>
+                            </label>
+                            
+                            <div class="scan-history-section">
+                                <div class="scan-history-head">
+                                    <span>SESSION SCAN HISTORY</span>
+                                    <small id="historyCount">0 SCANS</small>
+                                </div>
+                                <div class="scan-history-list" id="scanHistoryList">
+                                    <div class="scan-history-empty" id="historyEmpty">
+                                        <span>No previous scans in this session.<br>Uploaded scans will appear here.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="scan-file" id="scanFileInfo"><span>SELECTED FILE</span><b>NO FILE SELECTED</b></div>
+                        </section>
+
+                        <section class="scan-preview-panel">
+                            <div class="scan-panel-head">
+                                <div><span class="panel-kicker">02 / DETECTION VIEW</span>
+                                    <h4>Acoustic Target Overlay</h4>
+                                </div>
+                                <div class="scan-head-meta">
+                                    <span class="scan-time-badge" id="inferenceTime">-- ms</span>
+                                    <span class="scan-state" id="scanState">WAITING</span>
+                                </div>
+                            </div>
+                            <div class="sonar-image-stage" id="sonarImageStage">
+                                <div class="empty-scan">
+                                    <div class="scan-cross">⌁</div><b>NO SONAR FRAME LOADED</b><span>Upload a scan or click a sample to begin visual analysis.</span>
+                                </div>
+                                <img id="sonarPreview" alt="Uploaded sonar scan preview" hidden>
+                                <div class="sonar-sweep-beam" id="sonarSweepBeam" hidden></div>
+                                <div id="detectionBoxContainer"></div>
+                                <div class="scan-overlay" hidden id="scanOverlay">
+                                    <span id="overlayInfo">DETECTION OVERLAY</span>
+                                    <span id="overlayCount">0 TARGETS FLAGGED</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <aside class="scan-results-panel">
+                            <div class="scan-panel-head">
+                                <div><span class="panel-kicker">03 / RESULTS</span>
+                                    <h4>Classifications</h4>
+                                </div><span id="resultCount" class="result-count-badge">0</span>
+                            </div>
+                            <div class="scan-result-empty" id="scanResultEmpty">No detections yet.<br><small>Run analysis after uploading a sonar frame or picking a sample.</small></div>
+                            <div class="scan-results" id="scanResults" hidden>
+                                <div class="scan-results-list" id="scanResultsList"></div>
+                                <div class="scan-results-footer">
+                                    <div class="scan-meta-summary">
+                                        <div><span>AVG CONFIDENCE</span><strong id="avgConfidence">--%</strong></div>
+                                        <div><span>SURVEY DEPTH</span><strong id="scanDepth">-- m</strong></div>
+                                    </div>
+                                    <button class="primary-btn scan-add-btn" id="addScanResults">+ ADD TO SURVEY DETECTIONS</button>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </section>
+
+                <!-- DETECTIONS -->
+                <section class="tab-page" id="detections">
+                    <div class="page-intro">
+                        <div><span class="cyan-label">OBJECT DATABASE</span>
+                            <h3>Detections</h3>
+                            <p>All objects detected during the current survey.</p>
+                        </div><button class="primary-btn">+ EXPORT FILTERED</button>
+                    </div>
+                    <div class="filter-bar"><input id="searchInput" placeholder="Search object class..."><select
+                            id="confidenceFilter">
+                            <option value="all">All confidence</option>
+                            <option value="high">High &gt;80%</option>
+                            <option value="medium">Medium 50–80%</option>
+                            <option value="low">Low &lt;50%</option>
+                        </select><select>
+                            <option>Current session</option>
+                            <option>All sessions</option>
+                        </select></div>
+                    <div class="table-panel">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>OBJECT</th>
+                                    <th>CONFIDENCE</th>
+                                    <th>LATITUDE</th>
+                                    <th>LONGITUDE</th>
+                                    <th>DEPTH</th>
+                                    <th>TIME</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="detectionTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- REPORTS -->
+                <section class="tab-page" id="reports">
+                    <div class="page-intro">
+                        <div><span class="cyan-label">MISSION OUTPUT</span>
+                            <h3>Reports</h3>
+                            <p>Generate and inspect structured survey reports.</p>
+                        </div><button class="primary-btn" id="generateReport">GENERATE REPORT</button>
+                    </div>
+                    <div class="report-grid">
+                        <article class="report-card-big"><span class="file-icon">JSON</span>
+                            <h4>Detection Report</h4>
+                            <p>Complete machine-readable detection data, confidence scores and geolocation.</p>
+                            <div><b id="reportJsonCount">0</b> detections · Updated just now</div><button class="secondary-btn"
+                                id="reportJson">DOWNLOAD
+                                JSON ↓</button>
+                        </article>
+                        <article class="report-card-big"><span class="file-icon csv">CSV</span>
+                            <h4>Survey Spreadsheet</h4>
+                            <p>Flat detection table suitable for analysis in Excel, Python or GIS software.</p>
+                            <div><b id="reportCsvCount">0</b> rows · 7 columns</div><button class="secondary-btn" id="reportCsv">DOWNLOAD
+                                CSV ↓</button>
+                        </article>
+                        <article class="report-card-big"><span class="file-icon pdf">PDF</span>
+                            <h4>Mission Summary</h4>
+                            <p>Presentation-ready summary containing coverage, object classes and confidence
+                                distribution.</p>
+                            <div><b id="reportPdfArea">0.00 km²</b> scanned · Session 0028</div><button class="secondary-btn"
+                                id="reportPdf">PREPARE
+                                SUMMARY ↓</button>
+                        </article>
+                    </div>
+                    <div class="panel report-preview">
+                        <div class="panel-head">
+                            <div><span class="panel-kicker">PREVIEW</span>
+                                <h4>Session 0028 Summary</h4>
+                            </div><span class="status-pill">ACTIVE SESSION</span>
+                        </div>
+                        <div class="summary-big">
+                            <div><small>DETECTIONS</small><b id="previewDetections">0</b></div>
+                            <div><small>HIGH CONF.</small><b id="previewHighConf">0</b></div>
+                            <div><small>AREA</small><b id="previewArea">0.00 km²</b></div>
+                            <div><small>SCANS</small><b id="previewScans">0</b></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ANALYTICS -->
+                <section class="tab-page" id="analytics">
+                    <div class="page-intro">
+                        <div><span class="cyan-label">DATA INTELLIGENCE</span>
+                            <h3>Analytics</h3>
+                            <p>Understand detection trends and model behaviour in the active session.</p>
+                        </div><select id="analyticsTimeFilter">
+                            <option>This session</option>
+                            <option>Last 7 days</option>
+                        </select>
+                    </div>
+                    <div class="analytics-grid">
+                        <article class="panel big-chart">
+                            <div class="panel-head">
+                                <div><span class="panel-kicker">TREND</span>
+                                    <h4>Confidence Distribution</h4>
+                                </div>
+                            </div>
+                            <div class="bars" id="analyticsBars">
+                                <div id="anBarHigh" style="height:10%"><span>HIGH</span><b id="anValHigh">0</b></div>
+                                <div id="anBarMed" style="height:10%"><span>MED</span><b id="anValMed">0</b></div>
+                                <div id="anBarLow" style="height:10%"><span>LOW</span><b id="anValLow">0</b></div>
+                            </div>
+                        </article>
+                        <article class="panel accuracy-card"><span class="panel-kicker">MODEL</span>
+                            <h4>Inference Health</h4>
+                            <div class="accuracy"><b id="anOverallConfidence">--%</b><span>overall confidence</span></div>
+                            <div class="progress"><i id="anAccuracyBar" style="width:0%"></i></div>
+                            <p id="anBenchmarkText">Session target benchmark: &gt; 85%</p>
+                        </article>
+                        <article class="panel">
+                            <div class="panel-head">
+                                <div><span class="panel-kicker">CLASS PERFORMANCE</span>
+                                    <h4>Session Object Confidence</h4>
+                                </div>
+                            </div>
+                            <div class="perf-list" id="analyticsPerfList">
+                                <div style="color:var(--muted);font-size:10px;padding:10px 0;">No scanned objects in this session yet.</div>
+                            </div>
+                        </article>
+                        <article class="panel">
+                            <div class="panel-head">
+                                <div><span class="panel-kicker">COVERAGE</span>
+                                    <h4>Survey Statistics</h4>
+                                </div>
+                            </div>
+                            <div class="stat-lines">
+                                <div><span>Distance covered</span><b id="statDistance">0.00 km</b></div>
+                                <div><span>Area scanned</span><b id="statArea">0.00 km²</b></div>
+                                <div><span>Images processed</span><b id="statImages">0</b></div>
+                                <div><span>Avg. inference</span><b id="statAvgInf">-- ms</b></div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <!-- SESSIONS -->
+                <section class="tab-page" id="sessions">
+                    <div class="page-intro">
+                        <div><span class="cyan-label">MISSION HISTORY</span>
+                            <h3>Survey Sessions</h3>
+                            <p>Browse previous detection runs.</p>
+                        </div><button class="primary-btn">+ NEW SESSION</button>
+                    </div>
+                    <div class="session-list">
+                        <div class="session-row active"><span class="session-id">SESSION 0028</span><b>Coastal Survey —
+                                Goa</b><span>128 detections</span><span>12.45 km²</span><span
+                                class="green-text">ACTIVE</span><button class="mini-btn">OPEN</button></div>
+                        <div class="session-row"><span class="session-id">SESSION 0027</span><b>Harbour Sweep —
+                                Mumbai</b><span>94
+                                detections</span><span>9.18 km²</span><span>26 Aug 2026</span><button
+                                class="mini-btn">OPEN</button>
+                        </div>
+                        <div class="session-row"><span class="session-id">SESSION 0026</span><b>Test Survey —
+                                Odisha</b><span>61
+                                detections</span><span>6.04 km²</span><span>25 Aug 2026</span><button
+                                class="mini-btn">OPEN</button>
+                        </div>
+                        <div class="session-row"><span class="session-id">SESSION 0025</span><b>Training Run — Arabian
+                                Sea</b><span>77 detections</span><span>7.88 km²</span><span>23 Aug 2026</span><button
+                                class="mini-btn">OPEN</button></div>
+                    </div>
+                </section>
+
+                <!-- DOWNLOADS -->
+                <section class="tab-page" id="downloads">
+                    <div class="page-intro">
+                        <div><span class="cyan-label">FILE CENTRE</span>
+                            <h3>Downloads</h3>
+                            <p>Exported data from the current and previous sessions.</p>
+                        </div>
+                    </div>
+                    <div class="download-grid">
+                        <div class="download-tile"><span>JSON</span>
+                            <h4>Session_0028_Detections.json</h4>
+                            <p>128 detection records</p><button class="secondary-btn" id="downloadJson2">DOWNLOAD
+                                ↓</button>
+                        </div>
+                        <div class="download-tile"><span>CSV</span>
+                            <h4>Session_0028_Report.csv</h4>
+                            <p>128 rows · 7 columns</p><button class="secondary-btn" id="downloadCsv2">DOWNLOAD
+                                ↓</button>
+                        </div>
+                        <div class="download-tile"><span>LOG</span>
+                            <h4>Session_0028_System.log</h4>
+                            <p>Processing and inference events</p><button class="secondary-btn"
+                                id="downloadLog">DOWNLOAD ↓</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SETTINGS -->
+                <section class="tab-page" id="settings">
+                    <div class="page-intro">
+                        <div><span class="cyan-label">SYSTEM CONFIGURATION</span>
+                            <h3>Settings</h3>
+                            <p>Frontend display and API connection settings.</p>
+                        </div>
+                    </div>
+                    <div class="settings-panel">
+                        <div class="setting">
+                            <div><b>API Server</b><small>FastAPI backend endpoint</small></div><input id="apiInput"
+                                value="http://localhost:8000">
+                        </div>
+                        <div class="setting">
+                            <div><b>Auto refresh</b><small>Refresh report data every 10 seconds</small></div><label
+                                class="switch"><input type="checkbox" checked><i></i></label>
+                        </div>
+                        <div class="setting">
+                            <div><b>Map animations</b><small>Animate incoming detection markers</small></div><label
+                                class="switch"><input type="checkbox" checked><i></i></label>
+                        </div>
+                        <div class="setting">
+                            <div><b>Confidence threshold</b><small>Minimum confidence displayed</small></div><select>
+                                <option>0%</option>
+                                <option>30%</option>
+                                <option>50%</option>
+                                <option>80%</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ABOUT -->
+                <section class="tab-page" id="about">
+                    <div class="about-hero">
+                        <div class="big-orb">⌁</div><span class="cyan-label">SONAR VISION v1.0</span>
+                        <h3>See beneath the surface.</h3>
+                        <p>A marine debris detection platform combining sonar imagery, machine learning, geotagging and
+                            interactive
+                            reporting.</p>
+                        <div class="tech-stack">
+                            <span>YOLOv8</span><span>FastAPI</span><span>Leaflet</span><span>OpenStreetMap</span><span>Python</span><span>ONNX</span>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <footer class="footer">
+                <span>SONAR VISION // MARINE INTELLIGENCE</span>
+                <span>SESSION <b>0028</b></span>
+                <span>MODEL <b>YOLOv8</b></span>
+                <span>API <b class="green-text">CONNECTED</b></span>
+            </footer>
+        </main>
+    </div>
+
+    <div id="toast"></div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
