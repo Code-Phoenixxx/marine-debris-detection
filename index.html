@@ -4,9 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Sonar Vision — Marine Survey Record</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
 </head>
 
 <body class="dark-mode">
@@ -530,7 +533,7 @@
                             <div class="scan-panel-head">
                                 <div><span class="panel-kicker">01 / INPUT</span>
                                     <h4>Upload sonar scan</h4>
-                                </div><span class="scan-format">PNG · JPG · JPEG</span>
+                                </div><span class="scan-format">png · xtf · jsf</span>
                             </div>
                             <label class="upload-box" id="uploadBox" for="sonarFile">
                                 <input id="sonarFile" type="file" accept="image/png,image/jpeg,image/jpg">
@@ -853,7 +856,7 @@
 
     <div id="toast"></div>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=2"></script>
 </body>
 
 </html>
